@@ -6,21 +6,26 @@ import {
   Param,
   Delete,
   Put,
+  ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { ExpenseService } from './expense.service';
-import { Prisma } from '@prisma/client';
+import { CreateExpenseDto, UpdateExpenseDto } from './dto';
 
 @Controller('expenses')
 export class ExpenseController {
   constructor(private readonly expenseService: ExpenseService) {}
 
   @Post()
-  create(@Body() data: Prisma.ExpenseCreateInput) {
-    return this.expenseService.create(data);
+  create(@Body() dto: CreateExpenseDto) {
+    return this.expenseService.create(dto);
   }
 
   @Get()
-  findAll() {
+  findAll(@Query('categoryId') categoryId?: string) {
+    if (categoryId) {
+      return this.expenseService.findByCategory(Number(categoryId));
+    }
     return this.expenseService.findAll();
   }
 
@@ -30,12 +35,20 @@ export class ExpenseController {
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() data: Prisma.ExpenseUpdateInput) {
-    return this.expenseService.update(+id, data);
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateExpenseDto) {
+    return this.expenseService.update(id, dto);
+  }
+  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.expenseService.remove(id);
+  }
+  @Get('summary/all')
+  getSummary() {
+    return this.expenseService.summary();
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.expenseService.remove(+id);
+  @Get('summary/month/:month')
+  getSummaryByMonth(@Param('month', ParseIntPipe) month: number) {
+    return this.expenseService.summaryByMonth(month);
   }
 }
