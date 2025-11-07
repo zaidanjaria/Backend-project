@@ -8,7 +8,9 @@ import {
   Put,
   ParseIntPipe,
   Query,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ExpenseService } from './expense.service';
 import { CreateExpenseDto, UpdateExpenseDto } from './dto';
 
@@ -50,5 +52,15 @@ export class ExpenseController {
   @Get('summary/month/:month')
   getSummaryByMonth(@Param('month', ParseIntPipe) month: number) {
     return this.expenseService.summaryByMonth(month);
+  }
+
+  // ✅ CSV export using PapaParse
+  @Get('export/csv')
+  async exportToCsv(@Res() res: Response) {
+    const csv = await this.expenseService.exportAllToCsv();
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="expenses.csv"');
+    res.status(200).send(csv);
   }
 }

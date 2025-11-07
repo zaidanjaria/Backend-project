@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateExpenseDto, UpdateExpenseDto } from './dto';
+import Papa from 'papaparse';
 
 @Injectable()
 export class ExpenseService {
@@ -12,6 +13,7 @@ export class ExpenseService {
     amount: true,
     date: true,
     category: { select: { id: true, name: true } },
+    createdAt: true,
   };
 
   create(data: CreateExpenseDto) {
@@ -71,5 +73,26 @@ export class ExpenseService {
     });
     const total = filtered.reduce((sum, e) => sum + e.amount, 0);
     return { month, year: currentYear, total, count: filtered.length };
+  }
+
+  async exportAllToCsv() {
+    const expenses = await this.findAll();
+    // Prepare clean JSON for export
+    const data = expenses.map((e) => ({
+      ID: e.id,
+      Description: e.description,
+      Amount: e.amount,
+      Category: e.category?.name || 'Uncategorized',
+      Date: new Date(e.date).toISOString().split('T')[0],
+      CreatedAt: new Date(e.createdAt).toISOString(),
+    }));
+
+    // ✅ Convert to CSV using PapaParse
+    const csv = Papa.unparse(data, {
+      quotes: true,
+      header: true,
+      skipEmptyLines: true,
+    });
+    return csv;
   }
 }
