@@ -20,7 +20,8 @@ export class ExpenseService {
     return this.prisma.expense.create({ data });
   }
 
-  findAll() {
+  async findAll() {
+   //await this.prisma.$queryRawUnsafe('SELECT pg_sleep(1)::text');
     return this.prisma.expense.findMany({
       orderBy: { date: 'desc' },
       select: this.selectedFields,
